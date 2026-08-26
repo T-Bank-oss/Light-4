@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NEURO-SYNTH ULTRA 4.0</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; }
+
+        #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+        .ui-layer {
+            position: relative; z-index: 10; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: calc(env(safe-area-inset-top) + 15px) 20px calc(env(safe-area-inset-bottom) + 15px) 20px;
+            background: rgba(8, 8, 16, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            transition: opacity 0.5s ease; overflow-y: auto;
+        }
+
+        .header { text-align: center; margin-bottom: 10px; }
+        .header h1 { font-size: 1.3rem; font-weight: 800; letter-spacing: 1px; color: #818cf8; text-transform: uppercase; }
+        .header p { font-size: 0.75rem; color: #94a3b8; }
+
+        .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 10px 0 6px 0; }
+
+        .grid-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+        .btn-select {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px; padding: 10px 5px; text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-select.active {
+            background: rgba(99, 102, 241, 0.25); border-color: #6366f1; color: #fff;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+        }
+        .btn-select .name { font-size: 0.8rem; font-weight: 600; display: block; }
+        .btn-select .desc { font-size: 0.65rem; color: #94a3b8; display: block; margin-top: 2px; }
+
+        .start-btn {
+            width: 100%; padding: 16px; border: none; border-radius: 16px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;
+            font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .hud-overlay {
+            position: absolute; top: 20px; width: 100%; text-align: center; z-index: 5;
+            font-size: 0.75rem; color: rgba(255,255,255,0.4); display: none; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+    <div class="hud-overlay" id="hud">Нажмите в любой точке экрана для выхода</div>
+
+    <div class="ui-layer" id="ui">
+        <div class="header">
+            <h1>NEURO-SYNTH ULTRA</h1>
+            <p>Продвинутая АУДИО-ВИЗУАЛЬНАЯ СТИМУЛЯЦИЯ</p>
+        </div>
+
+        <div>
+            <div class="section-title">1. Несущая частота (Звуковая база)</div>
+            <div class="grid-selector" id="carrierGrid">
+                <div class="btn-select active" onclick="setCarrier(200, this)">
+                    <span class="name">200 Гц</span>
+                    <span class="desc">Классика AVS</span>
+                </div>
+                <div class="btn-select" onclick="setCarrier(432, this)">
+                    <span class="name">432 Гц</span>
+                    <span class="desc">Гармоническая</span>
+                </div>
+                <div class="btn-select" onclick="setCarrier(528, this)">
+                    <span class="name">528 Гц</span>
+                    <span class="desc">Трансформация</span>
+                </div>
+            </div>
+
+            <div class="section-title">2. Целевой ритм мозга (Бинауральный сдвиг)</div>
+            <div class="grid-selector" id="hzGrid">
+                <div class="btn-select" onclick="setHz(2.5, this)">
+                    <span class="name">Дельта (2.5 Гц)</span>
+                    <span class="desc">Глубокий сон</span>
+                </div>
+                <div class="btn-select" onclick="setHz(5.5, this)">
+                    <span class="name">Тета (5.5 Гц)</span>
+                    <span class="desc">Транс / Видения</span>
+                </div>
+                <div class="btn-select active" onclick="setHz(10.0, this)">
+                    <span class="name">Альфа (10 Гц)</span>
+                    <span class="desc">Релакс / Медитация</span>
+                </div>
+                <div class="btn-select" onclick="setHz(15.0, this)">
+                    <span class="name">Бета (15 Гц)</span>
+                    <span class="desc">Фокус / Тонус</span>
+                </div>
+                <div class="btn-select" onclick="setHz(40.0, this)">
+                    <span class="name">Гамма (40 Гц)</span>
+                    <span class="desc">Интеллект</span>
+                </div>
+                <div class="btn-select" onclick="setHz(100.0, this)">
+                    <span class="name">Гипер (100 Гц)</span>
+                    <span class="desc">Сверх-активация</span>
+                </div>
+            </div>
+
+            <div class="section-title">3. Визуальный режим стимуляции</div>
+            <div class="grid-selector" id="modeGrid">
+                <div class="btn-select active" onclick="setVisual('split', this)">
+                    <span class="name">Разделение</span>
+                    <span class="desc">Лево / Право</span>
+                </div>
+                <div class="btn-select" onclick="setVisual('grid', this)">
+                    <span class="name">4D Квадраты</span>
+                    <span class="desc">Перекрестный</span>
+                </div>
+                <div class="btn-select" onclick="setVisual('radial', this)">
+                    <span class="name">Фрактал</span>
+                    <span class="desc">Центробежный</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="start-btn" onclick="toggleSession()">Запустить Нейро-Сессию</button>
+    </div>
+
+<script>
+    let selectedCarrier = 200;
+    let selectedHz = 10.0;
+    let selectedVisual = 'split';
+
+    let isRunning = false;
+    let animId, audioCtx, leftOsc, rightOsc, masterGain;
+    let wakeLock = null;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function setCarrier(val, el) {
+        if(isRunning) return;
+        selectedCarrier = val;
+        document.querySelectorAll('#carrierGrid .btn-select').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function setHz(val, el) {
+        if(isRunning) return;
+        selectedHz = val;
+        document.querySelectorAll('#hzGrid .btn-select').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function setVisual(val, el) {
+        if(isRunning) return;
+        selectedVisual = val;
+        document.querySelectorAll('#modeGrid .btn-select').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function render(now) {
+        const t = now / 1000;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        if (selectedVisual === 'split') {
+            let leftPhase = (Math.sin(t * selectedHz * Math.PI * 2) + 1) / 2;
+            let rightPhase = (Math.sin(t * selectedHz * Math.PI * 2 + Math.PI) + 1) / 2;
+
+            ctx.fillStyle = `rgb(0, 0, ${Math.floor(leftPhase * 255)})`;
+            ctx.fillRect(0, 0, w / 2, h);
+
+            ctx.fillStyle = `rgb(${Math.floor(rightPhase * 255)}, ${Math.floor(rightPhase * 120)}, 0)`;
+            ctx.fillRect(w / 2, 0, w / 2, h);
+
+        } else if (selectedVisual === 'grid') {
+            let phase = (Math.sin(t * selectedHz * Math.PI * 2) + 1) / 2;
+            let invPhase = 1 - phase;
+
+            ctx.fillStyle = `rgb(${Math.floor(phase * 255)}, 0, ${Math.floor(phase * 200)})`;
+            ctx.fillRect(0, 0, w / 2, h / 2);
+            ctx.fillRect(w / 2, h / 2, w / 2, h / 2);
+
+            ctx.fillStyle = `rgb(0, ${Math.floor(invPhase * 255)}, ${Math.floor(invPhase * 220)})`;
+            ctx.fillRect(w / 2, 0, w / 2, h / 2);
+            ctx.fillRect(0, h / 2, w / 2, h / 2);
+
+        } else if (selectedVisual === 'radial') {
+            const cx = w / 2; const cy = h / 2;
+            const maxR = Math.max(w, h);
+            
+            for (let r = maxR; r > 0; r -= 35) {
+                let phaseShift = r * 0.008;
+                let val = (Math.sin(t * selectedHz * Math.PI * 2 - phaseShift) + 1) / 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgb(${Math.floor(val * 255)}, ${Math.floor(val * 60)}, ${Math.floor(val * 180)})`;
+                ctx.fill();
+            }
+        }
+
+        animId = requestAnimationFrame(render);
+    }
+
+    async function toggleSession() {
+        if (!isRunning) {
+            isRunning = true;
+
+            // Инициализация Web Audio API для бинауральных ритмов
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const merger = audioCtx.createChannelMerger(2);
+
+            leftOsc = audioCtx.createOscillator();
+            rightOsc = audioCtx.createOscillator();
+            leftOsc.type = 'sine'; 
+            rightOsc.type = 'sine';
+
+            // Настройка бинаурального сдвига (Левый = Carrier, Правый = Carrier + Hz)
+            leftOsc.frequency.setValueAtTime(selectedCarrier, audioCtx.currentTime);
+            rightOsc.frequency.setValueAtTime(selectedCarrier + selectedHz, audioCtx.currentTime);
+
+            leftOsc.connect(merger, 0, 0); // Левый канал в левое ухо
+            rightOsc.connect(merger, 0, 1); // Правый канал в правое ухо
+
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+            masterGain.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 1.5);
+
+            merger.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            leftOsc.start(); 
+            rightOsc.start();
+            animId = requestAnimationFrame(render);
+
+            try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+
+            document.getElementById('ui').style.opacity = '0';
+            document.getElementById('ui').style.pointerEvents = 'none';
+            document.getElementById('hud').style.display = 'block';
+        } else {
+            stopSession();
+        }
+    }
+
+    function stopSession() {
+        isRunning = false;
+        if (audioCtx) {
+            masterGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+            setTimeout(() => { try { audioCtx.close(); } catch(e){} }, 300);
+        }
+        cancelAnimationFrame(animId);
+        ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (wakeLock) { wakeLock.release(); wakeLock = null; }
+
+        document.getElementById('ui').style.opacity = '1';
+        document.getElementById('ui').style.pointerEvents = 'auto';
+        document.getElementById('hud').style.display = 'none';
+    }
+
+    document.getElementById('canvas').addEventListener('click', () => { if(isRunning) stopSession(); });
+</script>
+</body>
+</html>
